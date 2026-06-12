@@ -262,11 +262,11 @@ log("NIGHT COMPLETE","sys");
 }
 
 /* power (slower drain) */
-let drain=0.055;
-if(state.door)drain+=0.35;
-if(state.vent1)drain+=0.22;
-if(state.vent2)drain+=0.22;
+let drain=0.10;
 
+if(state.door) drain+=0.50;
+if(state.vent1) drain+=0.35;
+if(state.vent2) drain+=0.35;
 power-=drain;
 if(power<0)power=0;
 
