@@ -264,11 +264,11 @@ log("NIGHT COMPLETE","sys");
 /* power (slower drain) */
 let drain=0.10;
 
-if(state.door) drain+=0.80;
-if(state.vent1) drain+=0.70;
-if(state.vent2) drain+=0.70;
-power-=drain;
-if(power<0)power=0;
+let drain=0.10;
+
+if(state.door) drain+=0.50;
+if(state.vent1) drain+=0.50;
+if(state.vent2) drain+=0.50;
 
 powerDisplay.textContent=`POWER: ${Math.floor(power)}%`;
 
