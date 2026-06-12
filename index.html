@@ -262,13 +262,13 @@ log("NIGHT COMPLETE","sys");
 }
 
 /* power (slower drain) */
-let drain=0.10;
+let drain=0.080;
+if(state.door)drain+=0.50;
+if(state.vent1)drain+=0.50;
+if(state.vent2)drain+=0.50;
 
-let drain=0.10;
-
-if(state.door) drain+=0.50;
-if(state.vent1) drain+=0.50;
-if(state.vent2) drain+=0.50;
+power-=drain;
+if(power<0)power=0;
 
 powerDisplay.textContent=`POWER: ${Math.floor(power)}%`;
 
@@ -425,3 +425,5 @@ log("status");
 
 </body>
 </html>
+
+
