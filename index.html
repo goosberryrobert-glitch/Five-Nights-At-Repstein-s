@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Five Nights at Repstein's</title>
+
+
+<style>
+body{
+margin:0;
+background:#000;
+color:#00ff88;
+font-family:Consolas,monospace;
+overflow:hidden;
+}
+
+/* ---------------- MENU ---------------- */
+#menu{
+position:absolute;
+inset:0;
+background:radial-gradient(circle,#111,#000);
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+z-index:10;
+text-align:center;
+}
+
+#title{
+font-size:28px;
+margin-bottom:10px;
+}
+
+#sub{
+opacity:0.7;
+margin-bottom:25px;
+}
+
+#startBtn{
+padding:10px 20px;
+border:2px solid #00ff88;
+background:black;
+color:#00ff88;
+cursor:pointer;
+font-size:16px;
+}
+
+#startBtn:hover{
+background:#00ff88;
+color:black;
+}
+
+/* ---------------- OFFICE ---------------- */
+#office{
+height:38vh;
+background:radial-gradient(circle,#111,#000);
+position:relative;
+border-bottom:2px solid #00ff88;
+}
+
+#door{
+position:absolute;
+left:50%;
+top:50%;
+transform:translate(-50%,-50%);
+width:120px;
+height:180px;
+border:2px solid #00ff88;
+transition:.25s;
+}
+
+#door.closed{background:#00ff88;}
+#door.open{background:#111;}
+
+.vent{
+position:absolute;
+top:20px;
+width:120px;
+height:70px;
+border:2px solid #00ff88;
+overflow:hidden;
+background:
+repeating-linear-gradient(
+0deg,
+#111 0px,
+#111 5px,
+#000 5px,
+#000 10px
+);
+}
+
+#vent1{left:20px;}
+#vent2{right:20px;}
+
+.vent::after{
+content:"";
+position:absolute;
+inset:0;
+background:
+repeating-linear-gradient(
+45deg,
+rgba(0,255,136,.5),
+rgba(0,255,136,.5) 8px,
+rgba(0,0,0,.8) 8px,
+rgba(0,0,0,.8) 16px
+);
+transform:translateY(-100%);
+transition:.2s;
+}
+
+.vent.closed::after{transform:translateY(0);}
+
+/* ---------------- TERMINAL ---------------- */
+#terminal{
+height:62vh;
+display:flex;
+flex-direction:column;
+}
+
+#header{
+background:#000;
+border-bottom:1px solid #00ff88;
+padding:6px;
+display:flex;
+justify-content:space-between;
+}
+
+#feed{
+flex:1;
+overflow-y:auto;
+background:#000;
+padding:8px;
+}
+
+/* ✅ FIXED COMMAND BOX BORDER */
+#cmd{
+width:100%;
+padding:10px;
+background:#000;
+border:2px solid #00ff88;   /* BORDER ADDED */
+color:#00ff88;
+font-size:16px;
+outline:none;
+box-sizing:border-box;
+}
+
+/* glow when typing */
+#cmd:focus{
+box-shadow:0 0 10px #00ff88;
+}
+
+.warn{color:#ffd000;}
+.danger{color:#ff4444;}
+.sys{color:#00ff88;}
+.cmd{color:#66ccff;}
+
+</style>
+</head>
+
+<body>
+
+<!-- MENU -->
+<div id="menu">
+<div id="title">Five Nights at Repstein's</div>
+<div id="sub">Created by Uyang</div>
+<div id "sub">Sponsored by Tun Tun Timmy</div>
+<button id="startBtn">START</button>
+</div>
+
+<!-- GAME -->
+<div id="office">
+<div id="vent1" class="vent"></div>
+<div id="vent2" class="vent"></div>
+<div id="door" class="open"></div>
+</div>
+
+<div id="terminal">
+
+<div id="header">
+<div>SYSTEM ONLINE</div>
+<div id="powerDisplay">POWER: 100%</div>
+<div id="timeDisplay">TIME: 0:00</div>
+</div>
+
+<div id="feed"></div>
+<input id="cmd">
+
+</div>
+
+<script>
+
+const menu=document.getElementById("menu");
+const startBtn=document.getElementById("startBtn");
+
+const feed=document.getElementById("feed");
+const cmd=document.getElementById("cmd");
+const door=document.getElementById("door");
+const powerDisplay=document.getElementById("powerDisplay");
+const timeDisplay=document.getElementById("timeDisplay");
+
+let gameStarted=false;
+let gameOver=false;
+
+let power=100;
+let startTime=0;
+
+let state={
+door:false,
+vent1:false,
+vent2:false
+};
+
+/* START */
+startBtn.onclick=()=>{
+menu.style.display="none";
+gameStarted=true;
+startTime=Date.now();
+log("⚠ SYSTEM ONLINE - TYPE HELP FOR COMMANDS","warn");
+log("SURVIVE 3 MINUTES","sys");
+};
+
+/* LOG */
+function log(t,type="sys"){
+let d=document.createElement("div");
+d.className=type;
+d.textContent=t;
+feed.appendChild(d);
+feed.scrollTop=feed.scrollHeight;
+}
+
+/* CONTROLS */
+function setDoor(c){
+state.door=c;
+door.className=c?"closed":"open";
+log(c?"🚪 door closed":"🚪 door open");
+}
+
+function setVent(id,c){
+state[id]=c;
+document.getElementById(id).classList.toggle("closed",c);
+log(c?`🌬 ${id} sealed`:`🌬 ${id} open`);
+}
+
+/* TIME + POWER + WIN */
+setInterval(()=>{
+
+if(!gameStarted || gameOver)return;
+
+let elapsed=(Date.now()-startTime)/1000;
+
+/* time */
+let m=Math.floor(elapsed/60);
+let s=Math.floor(elapsed%60);
+timeDisplay.textContent=`TIME: ${m}:${s.toString().padStart(2,"0")}`;
+
+/* win */
+if(elapsed>=180){
+gameOver=true;
+log("🏆 YOU SURVIVED 3 MINUTES","warn");
+log("NIGHT COMPLETE","sys");
+}
+
+/* power (slower drain) */
+let drain=0.055;
+if(state.door)drain+=0.35;
+if(state.vent1)drain+=0.22;
+if(state.vent2)drain+=0.22;
+
+power-=drain;
+if(power<0)power=0;
+
+powerDisplay.textContent=`POWER: ${Math.floor(power)}%`;
+
+if(power<=0){
+gameOver=true;
+log("⚡ POWER OUT","danger");
+log("GAME OVER","danger");
+}
+
+},1000);
+
+/* DIFFICULTY */
+function difficultyMultiplier(){
+let t=(Date.now()-startTime)/1000;
+return 0.7 + (t/230);
+}
+
+/* ANIMATRONICS */
+function bot(name,route,startPos){
+return{
+name,
+route,
+pos:startPos,
+baseSpeed:1.2+Math.random()*0.6,
+warn1:false,
+warn2:false,
+warn3:false
+};
+}
+
+let bots=[
+bot("Douglass","door",72),
+bot("Balke","vent1",78),
+bot("Repstein","vent2",82)
+];
+
+/* AI */
+setInterval(()=>{
+
+if(!gameStarted || gameOver)return;
+
+let scale=difficultyMultiplier();
+
+bots.forEach(b=>{
+
+b.pos-=b.baseSpeed*scale;
+
+if(b.pos<60 && !b.warn1){
+log(`👣 ${b.name} is stirring near ${b.route}`,"warn");
+b.warn1=true;
+}
+
+if(b.pos<42 && !b.warn2){
+log(`⚠ ${b.name} is approaching ${b.route}`,"warn");
+b.warn2=true;
+}
+
+if(b.pos<=25 && !b.warn3){
+log(`🚨 ${b.name} is right in front of ${b.route}`,"danger");
+b.warn3=true;
+}
+
+if(b.pos<=18){
+
+let t=b.route;
+
+if(t==="door"){
+if(state.door){
+log(`🔊 ${b.name} is banging on the door`,"danger");
+power-=2;
+b.pos=80;
+b.warn1=b.warn2=b.warn3=false;
+}else{
+gameOver=true;
+log(`☠ GAME OVER - ${b.name} entered through door`,"danger");
+}
+}
+
+if(t==="vent1"){
+if(state.vent1){
+log(`🔊 ${b.name} is banging on Vent 1`,"danger");
+power-=2;
+b.pos=80;
+b.warn1=b.warn2=b.warn3=false;
+}else{
+gameOver=true;
+log(`☠ GAME OVER - ${b.name} entered Vent 1`,"danger");
+}
+}
+
+if(t==="vent2"){
+if(state.vent2){
+log(`🔊 ${b.name} is banging on Vent 2`,"danger");
+power-=2;
+b.pos=80;
+b.warn1=b.warn2=b.warn3=false;
+}else{
+gameOver=true;
+log(`☠ GAME OVER - ${b.name} entered Vent 2`,"danger");
+}
+}
+
+}
+
+});
+
+},1400);
+
+/* COMMANDS */
+cmd.addEventListener("keydown",e=>{
+
+if(e.key!=="Enter")return;
+
+let c=cmd.value.trim().toLowerCase();
+cmd.value="";
+
+log("> "+c,"cmd");
+
+/* SECRET WIN */
+if(c==="13"){
+gameOver=true;
+log("🥚 EASTER EGG FOUND","warn");
+log("DEV BACKDOOR ACTIVATED","sys");
+log("🏆 INSTANT WIN","warn");
+return;
+}
+
+if(c==="help")showHelp?.();
+else if(c==="status")log(`POWER: ${Math.floor(power)}%`,"sys");
+
+else if(c==="door open")setDoor(false);
+else if(c==="door close")setDoor(true);
+
+else if(c==="vent1 open")setVent("vent1",false);
+else if(c==="vent1 close")setVent("vent1",true);
+
+else if(c==="vent2 open")setVent("vent2",false);
+else if(c==="vent2 close")setVent("vent2",true);
+
+else log("unknown command","sys");
+
+});
+
+function showHelp(){
+log("📘 COMMANDS","warn");
+log("door open / door close");
+log("vent1 open / vent1 close");
+log("vent2 open / vent2 close");
+log("help");
+log("status");
+}
+
+</script>
+
+</body>
+</html>
